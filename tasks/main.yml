@@ -1,0 +1,13 @@
+---
+
+- block:
+
+    - include_tasks: claude.yml
+
+  when:
+    - want_claude
+    - ansible_facts.system == 'Linux'
+
+- name: set has_claude
+  set_fact:
+    has_claude: "{{ want_claude and ansible_facts.system == 'Linux' }}"
