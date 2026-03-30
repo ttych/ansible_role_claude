@@ -2,7 +2,7 @@
 
 - block:
 
-    - include_tasks: claude.yml
+    - include_tasks: claude_code.yml
 
   when:
     - want_claude

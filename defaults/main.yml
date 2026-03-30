@@ -2,12 +2,12 @@
 
 want_claude: no
 
-claude_version:
+claude_code_version:
 
-
+claude_code_bin_name: claude
 claude_code_releases_url: "https://storage.googleapis.com/claude-code-dist-86c565f3-f756-42ad-8dfa-d59b1c096819/claude-code-releases"
-claude_install_dir: "{{ system_local_bin_dir }}"
-claude_bin: "{{ claude_install_dir }}/claude"
+claude_code_install_dir: "{{ system_local_bin_dir }}"
+claude_code_bin: "{{ claude_code_install_dir }}/{{ claude_code_bin_name}}"
 
 claude_architecture_map:
   x86_64: x64
@@ -18,4 +18,3 @@ claude_platform: "{{ ansible_facts.system | lower }}-{{ claude_architecture_map[
 
 system_local_dir: /usr/local
 system_local_bin_dir: "{{ system_local_dir }}/bin"
-

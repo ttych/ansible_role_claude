@@ -1,0 +1,72 @@
+---
+
+- name: Create download directory
+  ansible.builtin.file:
+    path: "{{ claude_code_install_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+
+- name: check current claude code version
+  ansible.builtin.stat:
+    path: "{{ claude_code_bin }}"
+  register: t_claude_code_bin
+
+
+- block:
+
+    - name: get latest claude code version
+      ansible.builtin.uri:
+        url: "{{ claude_code_releases_url }}/latest"
+        return_content: yes
+      changed_when: no
+      register: t_claude_code_latest_version
+
+    - name: set latest claude version
+      ansible.builtin.set_fact:
+        claude_code_version: "{{ t_claude_code_latest_version.content | trim }}"
+
+  when: claude_code_version is not defined or claude_code_version is none or claude_code_version == "" or claude_code_version == "latest"
+
+
+- block:
+
+    - name: get current claude code version
+      ansible.builtin.shell:
+        cmd: "{{ claude_code_bin }} --version | sed -e 's/^\\([0-9.]*\\)\\s.*$/\\1/g'"
+      register: t_claude_code_current_version
+      changed_when: no
+
+  when: t_claude_code_bin.stat.exists
+
+
+- block:
+
+    - name: get claude code release manifest for the version
+      ansible.builtin.uri:
+        url: "{{ claude_code_releases_url }}/{{ claude_code_version }}/manifest.json"
+        return_content: yes
+      changed_when: no
+      register: t_claude_code_latest_version_manifest
+
+    - name: Extract checksum from manifest using json_query
+      ansible.builtin.set_fact:
+        claude_code_version_binary_name: "{{ t_claude_code_latest_version_manifest.json.platforms[claude_platform].binary }}"
+        claude_code_version_binary_checksum: "{{ t_claude_code_latest_version_manifest.json.platforms[claude_platform].checksum }}"
+      when: t_claude_code_latest_version_manifest.json is defined
+
+    - name: download claude code binary
+      ansible.builtin.get_url:
+        url: "{{ claude_code_releases_url }}/{{ claude_code_version }}/{{ claude_platform }}/claude"
+        dest: "{{ claude_code_bin }}"
+        owner: root
+        group: root
+        mode: '0755'
+        checksum: "sha256:{{ claude_code_version_binary_checksum }}"
+      register: t_claude_code_bin
+
+
+
+  when: not t_claude_code_bin.stat.exists or (t_claude_code_current_version is defined and t_claude_code_current_version.stdout != claude_code_version)
